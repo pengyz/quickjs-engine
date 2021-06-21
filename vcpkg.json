@@ -1,0 +1,14 @@
+{
+    "name" : "quickjs-engine",
+    "version" : "0.0.0.1",
+    "dependencies" : [
+        {
+            "name" : "imgui",
+            "features" : [
+                "opengl3-gl3w-binding",
+                "glfw-binding"
+            ]
+        },
+        "glfw3"
+    ]
+}
