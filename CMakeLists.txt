@@ -15,6 +15,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${PROJECT_ARCH})
 file(GLOB _HEADE_FILES "*.h")
 file(GLOB _SOURCE_FILES "*.cpp")
 
+message("_SOURCE_FILES IS: "${_SOURCE_FILES})
+
 find_package(imgui CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 

@@ -92,7 +92,7 @@ int main(int, char **) {
 
   // Create window with graphics context
   GLFWwindow *window = glfwCreateWindow(
-      1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+      1280, 720, "quickjsEngine", NULL, NULL);
   if (window == NULL)
     return 1;
   glfwMakeContextCurrent(window);
