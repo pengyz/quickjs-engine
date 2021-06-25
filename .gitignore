@@ -6,4 +6,3 @@ persist.db
 vcpkg_installed/
 *.el
 .clangd/
-.vscode/

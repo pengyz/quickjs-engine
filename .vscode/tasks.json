@@ -1,0 +1,26 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "cmake build",
+            "command": "/usr/bin/cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build",
+                "-j8",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "调试器生成的任务。",
+        }
+    ],
+    "version": "2.0.0"
+}
