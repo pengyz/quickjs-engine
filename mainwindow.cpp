@@ -33,7 +33,7 @@ void main_window::paint()
 
     ImGui::Text("Javascript code:");                          ImGui::SameLine();
     ImGui::InputText("##inputJavascript", &_javascript);      ImGui::SameLine();
-    if (ImGui::Button("Evecute Javascript") && _javascript.length())
+    if (ImGui::Button("Evecute") && _javascript.length())
     {
       bool bOk = js_vm::get()->eval(_javascript.c_str(), _javascript.length(), "eval", 0);
       if (!bOk)
@@ -42,5 +42,7 @@ void main_window::paint()
       }
     }
     ImGui::End();
+  }else {
+    _visible = false;
   }
 }

@@ -1,5 +1,5 @@
 #include "js_vm.h"
-#include "third_party/quickjs/src/libbf.h"
+#include <libbf.h>
 #include <quickjs.h>
 #include <cassert>
 #include <iostream>
