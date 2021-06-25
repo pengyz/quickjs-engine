@@ -5,10 +5,11 @@
         {
             "name" : "imgui",
             "features" : [
-                "opengl3-gl3w-binding",
+                "opengl3-glad-binding",
                 "glfw-binding"
             ]
         },
-        "glfw3"
+        "glfw3",
+        "libuv"
     ]
 }

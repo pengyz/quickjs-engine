@@ -1,5 +1,6 @@
 #include "mainwindow.h"
-#include "js_vm.h"
+#include "js_vm_manager.h"
+#include "js_vm_environment.h"
 
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -9,8 +10,8 @@
 main_window::main_window(int x, int y, int width, int height)
     : _x(x), _y(y), _width(width), _height(height)
 {
-  bool ret = js_vm::get()->init();
-  assert(ret);
+  bool bRet = js_vm_manager::get()->create_js_env();
+  assert(bRet);
 }
 
 void main_window::paint()
@@ -20,7 +21,7 @@ void main_window::paint()
   if (ImGui::Begin("MainWindow", &_visible))
   {
     //错误提示
-    ImGui::SetNextWindowContentSize(ImVec2(200,50));
+    ImGui::SetNextWindowContentSize(ImVec2(200, 50));
     if (ImGui::BeginPopup("ErrorPopup"))
     {
       ImGui::Text("javascript execute failed!");
@@ -31,18 +32,26 @@ void main_window::paint()
       ImGui::EndPopup();
     }
 
-    ImGui::Text("Javascript code:");                          ImGui::SameLine();
-    ImGui::InputText("##inputJavascript", &_javascript);      ImGui::SameLine();
+    ImGui::Text("Javascript code:");
+    ImGui::SameLine();
+    ImGui::InputText("##inputJavascript", &_javascript);
+    ImGui::SameLine();
     if (ImGui::Button("Evecute") && _javascript.length())
     {
-      bool bOk = js_vm::get()->eval(_javascript.c_str(), _javascript.length(), "eval", 0);
-      if (!bOk)
+      auto env = js_vm_manager::get()->get_env();
+      if (env)
       {
-        ImGui::OpenPopup("ErrorPopup");
+        bool bOk = env->eval(_javascript, "eval", 0, true);
+        if (!bOk)
+        {
+          ImGui::OpenPopup("ErrorPopup");
+        }
       }
     }
     ImGui::End();
-  }else {
+  }
+  else
+  {
     _visible = false;
   }
 }
