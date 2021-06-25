@@ -3,6 +3,8 @@
 #include <future>
 #include <variant>
 #include <queue>
+#include <rttr/registration>
+#include <rttr/registration_friend>
 
 //declear them, do not include uv.h in header file
 typedef struct uv_loop_s uv_loop_t;
@@ -21,14 +23,12 @@ enum class notify_type
     load_js_file,
 };
 
-typedef std::variant<std::string, int, bool, double, float> event_param;
-
 struct notify_event
 {
-    notify_type type = notify_type::none;
-    std::vector<event_param> params;
+    std::string function;
+    std::vector<rttr::variant> params;
     bool sync = false;
-    std::promise<bool> p;
+    std::promise<rttr::variant> p;
 };
 
 struct notify_worker
@@ -48,9 +48,11 @@ struct notify_worker
  * 这个类会在子线程中初始化整个JS环境，事件通知基于libuv异步执行
  * 
  */
+using namespace rttr;
 class js_vm_environment
 {
 private:
+    RTTR_REGISTRATION_FRIEND
     uv_loop_t *_uv_loop = nullptr;
     //uv handler
     struct

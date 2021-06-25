@@ -51,11 +51,16 @@ bool js_vm_manager::create_js_env(const std::string &token)
       },
       token);
   //wait item add and update fucture
-  std::lock_guard lck(vms_mutex);
-  while (!_vms.count(token))
+  while (true)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    continue;
+    bool bContain = false;
+    {
+      std::lock_guard lck(vms_mutex);
+      bContain = _vms.count(token);
+    }
+    if (bContain)
+      break;
   }
   std::get<1>(_vms[token]) = std::move(f);
 

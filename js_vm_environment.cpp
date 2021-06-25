@@ -6,6 +6,12 @@
 
 #include <quickjs.h>
 
+RTTR_REGISTRATION
+{
+    rttr::registration::class_<js_vm_environment>("js_vm_environment")
+        .method("eval", &js_vm_environment::__eval, rttr::access_levels::private_access);
+}
+
 void notify_worker::push(const std::shared_ptr<notify_event> notify)
 {
     std::lock_guard<std::mutex> lck(event_mutex);
@@ -101,25 +107,22 @@ void js_vm_environment::uv_async_handler(uv_async_t *async)
     while (!env->notify.empty())
     {
         auto evt = env->notify.pop();
-        switch (evt->type)
+
+        auto env_class = rttr::type::get<decltype(env)>();
+        auto target_function = env_class.get_method(evt->function);
+        if (target_function.is_valid())
         {
-        case notify_type::eval_js_code:
-        {
-            //校验参数
-            bool bRet = env->__eval(std::get<std::string>(evt->params[0]), std::get<std::string>(evt->params[1]),
-                                    std::get<int>(evt->params[2]));
+            //create args, rttr::argument only hold the rttr::variant ptr.
+            std::vector<rttr::argument> args;
+            for(int i=0;i<evt->params.size();i++) {
+                args.emplace_back(evt->params[i]);
+            }
+            //invoke the method
+            auto ret = env_class.invoke(evt->function, env, args);
             if (evt->sync)
             {
-                evt->p.set_value(bRet);
+                evt->p.set_value(ret);
             }
-        }
-        break;
-        case notify_type::load_js_file:
-        {
-        }
-        break;
-        default:
-            break;
         }
     }
 }
@@ -221,14 +224,14 @@ int js_vm_environment::run_loop()
         std::cout << "uv_prepare_start failed: " << uv_strerror(ret) << std::endl;
         return ret;
     }
-    uv_unref((uv_handle_t *) jobs.prepare);
+    uv_unref((uv_handle_t *)jobs.prepare);
     ret = uv_check_start(jobs.check, uv_check_handler);
     if (ret)
     {
         std::cout << "uv_check_start failed: " << uv_strerror(ret) << std::endl;
         return ret;
     }
-    uv_unref((uv_handle_t *) jobs.check);
+    uv_unref((uv_handle_t *)jobs.check);
     __uv_maybe_idle(this);
     ret = uv_run(get_loop(), UV_RUN_DEFAULT);
     if (ret)
@@ -249,18 +252,18 @@ void js_vm_environment::stop_loop()
 bool js_vm_environment::eval(const std::string &javascript, const std::string &filename, int flags, bool sync)
 {
     auto evt = std::make_shared<notify_event>();
-    evt->type = notify_type::eval_js_code;
+    evt->function = "eval";
     evt->sync = sync;
     if (sync)
-        evt->p = std::promise<bool>();
-    evt->params.emplace_back(event_param(javascript));
-    evt->params.emplace_back(event_param(filename));
-    evt->params.emplace_back(event_param(flags));
+        evt->p = std::promise<rttr::variant>();
+    evt->params.emplace_back(rttr::variant(javascript));
+    evt->params.emplace_back(rttr::variant(filename));
+    evt->params.emplace_back(rttr::variant(flags));
     notify.push(evt);
     bool bRet = true;
     if (sync)
     {
-        bRet = evt->p.get_future().get();
+        bRet = evt->p.get_future().get().to_bool();
     }
     return bRet;
 }

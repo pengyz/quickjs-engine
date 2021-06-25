@@ -18,6 +18,7 @@ file(GLOB _SOURCE_FILES "*.cpp")
 find_package(imgui CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(unofficial-libuv CONFIG REQUIRED)
+find_package(rttr CONFIG REQUIRED)
 
 add_subdirectory(third_party/quickjs-cmake)
 
@@ -35,4 +36,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   glfw
   quickjs
   unofficial::libuv::libuv
+  RTTR::Core RTTR::Core_Lib
 )
