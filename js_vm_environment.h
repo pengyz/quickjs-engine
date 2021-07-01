@@ -1,8 +1,10 @@
 #pragma once
 #include <vector>
 #include <future>
+#include <string>
 #include <variant>
 #include <queue>
+#include <memory>
 #include <rttr/registration>
 #include <rttr/registration_friend>
 
@@ -43,6 +45,18 @@ struct notify_worker
     bool empty();
 };
 
+struct method_register_info
+{
+    std::string module;
+    std::string method;
+    std::string signature;
+
+    method_register_info(const std::string &module, const std::string &method, const std::string &signature)
+        : module(module), method(method), signature(signature)
+    {
+    }
+};
+
 /**
  * @brief JS虚拟机环境管理类
  * 这个类会在子线程中初始化整个JS环境，事件通知基于libuv异步执行
@@ -51,6 +65,10 @@ struct notify_worker
 using namespace rttr;
 class js_vm_environment
 {
+public:
+    //模块注册信息
+    static std::vector<std::shared_ptr<method_register_info>> modules_;
+
 private:
     RTTR_REGISTRATION_FRIEND
     uv_loop_t *_uv_loop = nullptr;
@@ -86,6 +104,14 @@ public:
    * @return false 
    */
     bool init_uv();
+
+    /**
+     * @brief 初始化native模块
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool init_native_modules();
     /**
    * @brief 启动uv事件循环
    * 
@@ -108,4 +134,6 @@ public:
    * @return false      失败
    */
     bool eval(const std::string &javascript, const std::string &filename, int flags, bool sync = false);
+    //注册模块
+    bool register_module(const std::string &register_module_name, const std::string &class_name);
 };

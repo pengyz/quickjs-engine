@@ -1,6 +1,6 @@
 [submodule "third_party/vcpkg"]
 	path = third_party/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
-[submodule "third_party/quickjs-cmake"]
-	path = third_party/quickjs-cmake
-	url = https://gitee.com/SlayerNux_admin/quickjs-cmake.git
+[submodule "third_party/quickjspp"]
+	path = third_party/quickjspp
+	url = https://github.com/ftk/quickjspp.git

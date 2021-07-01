@@ -1,15 +1,22 @@
 #include <uv.h>
 #include "js_vm_environment.h"
+#include "quickjs.hpp"
 
 #include <cassert>
 #include <iostream>
 
 #include <quickjs.h>
 
+std::vector<std::shared_ptr<method_register_info>> js_vm_environment::modules_;
+
+JSCFunction;
+
+static JSValue g_module_c_func(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic);
+
 RTTR_REGISTRATION
 {
     rttr::registration::class_<js_vm_environment>("js_vm_environment")
-        .method("eval", &js_vm_environment::__eval, rttr::access_levels::private_access);
+        .method("eval", &js_vm_environment::__eval);
 }
 
 void notify_worker::push(const std::shared_ptr<notify_event> notify)
@@ -114,7 +121,8 @@ void js_vm_environment::uv_async_handler(uv_async_t *async)
         {
             //create args, rttr::argument only hold the rttr::variant ptr.
             std::vector<rttr::argument> args;
-            for(int i=0;i<evt->params.size();i++) {
+            for (int i = 0; i < evt->params.size(); i++)
+            {
                 args.emplace_back(evt->params[i]);
             }
             //invoke the method
@@ -216,6 +224,12 @@ bool js_vm_environment::init_uv()
     return true;
 }
 
+bool js_vm_environment::init_native_modules()
+{
+    register_module("@mrot/gui", "engine_gui_module");
+    return true;
+}
+
 int js_vm_environment::run_loop()
 {
     int ret = uv_prepare_start(jobs.prepare, uv_prepare_handler);
@@ -266,4 +280,30 @@ bool js_vm_environment::eval(const std::string &javascript, const std::string &f
         bRet = evt->p.get_future().get().to_bool();
     }
     return bRet;
+}
+
+bool js_vm_environment::register_module(const std::string &register_module_name, const std::string &class_name)
+{
+    auto meta_class = rttr::type::get_by_name(class_name);
+    if (!meta_class.is_valid())
+        return false;
+    auto methods = meta_class.get_methods();
+    std::vector<JSCFunctionListEntry> register_entries;
+    register_entries.reserve(methods.size());
+    for (const auto &method : methods)
+    {
+        int a;
+        std::string signature = class_name + "." + method.get_signature().to_string();
+        uint8_t length = method.get_parameter_infos().size();
+        auto info_ptr = std::make_shared<method_register_info>(class_name, method.get_name().to_string(), signature);
+        //准备entry，magic填入modules_中下标，我们把所有的模块平铺，这样的限制是，顺序无法更改，无法反注册模块，模块多了之后不清楚会不会超限制
+        //magic的type并不是int，而是uint16_t,最多只能有65535个定义，貌似不太够？
+        JSCFunctionListEntry entry = JS_CFUNC_MAGIC_DEF(info_ptr->method.c_str(), length, &g_module_c_func, static_cast<int16_t>(modules_.size()));
+        register_entries.push_back(entry);
+        modules_.push_back(info_ptr);
+    }
+    //注册模块
+    auto m = JS_NewCModule(_ctx, register_module_name.c_str(), nullptr);
+    JS_SetModuleExportList(_ctx, m, register_entries.data(), register_entries.size());
+    return true;
 }

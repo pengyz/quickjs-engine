@@ -42,6 +42,11 @@ bool js_vm_manager::create_js_env(const std::string &token)
         {
           return false;
         }
+        bRet = vm_env->init_native_modules();
+        if (!bRet)
+        {
+          return false;
+        }
         //将启动的任务加入其中
         {
           std::lock_guard lck(vms_mutex);
